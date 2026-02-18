@@ -30,36 +30,57 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-lg shadow-md w-96"
-      >
-        <h2 className="text-2xl font-bold mb-6">Doctor Login</h2>
+    <main className="min-h-screen bg-gradient-to-br from-[#062f2f] via-[#0a3f3a] to-[#021e1c] flex items-center justify-center p-8">
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-4 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] p-10">
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-4 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <h1 className="text-3xl font-semibold text-gray-900 mb-2 text-center">
+          MedChain+
+        </h1>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded"
-        >
-          Login
-        </button>
-      </form>
+        <p className="text-gray-500 text-center mb-8 text-sm">
+          Doctor Portal Login
+        </p>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+
+          {/* Email */}
+          <input
+            type="email"
+            placeholder="Email Address"
+            required
+            className="w-full p-4 border border-gray-300 rounded-lg
+            focus:outline-none focus:ring-2 focus:ring-emerald-500
+            placeholder:text-gray-500 text-gray-900"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          {/* Password */}
+          <input
+            type="password"
+            placeholder="Password"
+            required
+            className="w-full p-4 border border-gray-300 rounded-lg
+            focus:outline-none focus:ring-2 focus:ring-emerald-500
+            placeholder:text-gray-500 text-gray-900"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className="w-full bg-emerald-600 text-white py-4 rounded-lg
+            hover:bg-emerald-700 transition font-medium"
+          >
+            Login
+          </button>
+
+        </form>
+
+      </div>
+
     </main>
   );
 }

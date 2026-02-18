@@ -17,21 +17,42 @@ model User {
 
   medicalRecords MedicalRecord[]
   accessLogs     AccessLog[]
+
+  // ADD THIS
+  registeredPatients Patient[]
 }
 
 model Patient {
-  id             Int      @id @default(autoincrement())
-  name           String
-  biometricHash  String   @unique
-  bloodGroup     String?
-  height         Float?
-  weight         Float?
-  allergies      String?
-  createdAt      DateTime @default(now())
+  id                     Int      @id @default(autoincrement())
 
-  medicalRecords MedicalRecord[]
-  accessLogs     AccessLog[]
+  // Identity
+  name                   String
+  dateOfBirth            DateTime?
+  gender                 String?
+  phone                  String?
+  email                  String?
+  address                String?
+
+  // Medical
+  bloodGroup             String?
+  allergies              String?
+  currentMedications     String?
+
+  // Emergency
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+
+  biometricHash          String   @unique
+
+  registeredById         Int?
+  registeredBy           User?    @relation(fields: [registeredById], references: [id])
+
+  createdAt              DateTime @default(now())
+
+  medicalRecords         MedicalRecord[]
+  accessLogs             AccessLog[]
 }
+
 
 model MedicalRecord {
   id           Int      @id @default(autoincrement())
