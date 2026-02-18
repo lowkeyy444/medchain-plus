@@ -16,6 +16,9 @@ export async function POST(req: Request) {
 
     const doctor = await prisma.user.findUnique({
       where: { email },
+      include: {
+        hospital: true, // 🔥 include hospital relation
+      },
     });
 
     if (!doctor) {
@@ -37,7 +40,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = generateToken(doctor.id);
+    // 🔥 Generate JWT with hospitalId included
+    const token = generateToken({
+      userId: doctor.id,
+      email: doctor.email,
+      hospitalId: doctor.hospitalId,
+    });
 
     return NextResponse.json({
       message: "Login successful",
@@ -46,12 +54,17 @@ export async function POST(req: Request) {
         id: doctor.id,
         name: doctor.name,
         email: doctor.email,
-        hospitalName: doctor.hospitalName,
+        hospital: doctor.hospital
+          ? {
+              id: doctor.hospital.id,
+              name: doctor.hospital.name,
+            }
+          : null,
       },
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

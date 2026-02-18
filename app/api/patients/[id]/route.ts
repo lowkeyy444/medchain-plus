@@ -16,7 +16,7 @@ export async function GET(
       );
     }
 
-    // ✅ Next.js 16 requires awaiting params
+    // Await dynamic params (Next.js 16)
     const { id } = await context.params;
     const patientId = Number(id);
 
@@ -30,7 +30,19 @@ export async function GET(
     const patient = await prisma.patient.findUnique({
       where: { id: patientId },
       include: {
-        registeredBy: true,
+        medicalRecords: {
+          include: {
+            attachments: true,
+            doctor: {
+              include: {
+                hospital: true,   // 🔥 include hospital info
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 

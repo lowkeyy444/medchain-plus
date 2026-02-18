@@ -7,20 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Hospital {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  records   MedicalRecord[]
+
+  doctors   User[]
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   name          String
   email         String   @unique
   password      String
-  hospitalName  String?
   createdAt     DateTime @default(now())
+
+  hospital      Hospital? @relation(fields: [hospitalId], references: [id])
+  hospitalId    Int?
 
   medicalRecords MedicalRecord[]
   accessLogs     AccessLog[]
-
-  // ADD THIS
   registeredPatients Patient[]
 }
+
 
 model Patient {
   id                     Int      @id @default(autoincrement())
@@ -55,15 +66,43 @@ model Patient {
 
 
 model MedicalRecord {
-  id           Int      @id @default(autoincrement())
-  patient      Patient  @relation(fields: [patientId], references: [id])
-  patientId    Int
-  doctor       User     @relation(fields: [doctorId], references: [id])
-  doctorId     Int
-  diagnosis    String
-  prescription String
-  notes        String?
-  createdAt    DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+
+  patient         Patient  @relation(fields: [patientId], references: [id])
+  patientId       Int
+
+  doctor          User     @relation(fields: [doctorId], references: [id])
+  doctorId        Int
+
+  hospital        Hospital @relation(fields: [hospitalId], references: [id])
+  hospitalId      Int
+
+  visitType       String?
+  chiefComplaint  String?
+  vitals          String?
+
+  diagnosis       String
+  prescription    String?
+  investigations  String?
+  followUpDate    DateTime?
+
+  notes           String?
+
+  attachments     MedicalAttachment[]
+
+  createdAt       DateTime @default(now())
+}
+
+model MedicalAttachment {
+  id              Int      @id @default(autoincrement())
+  fileName        String
+  filePath        String
+  fileType        String
+  fileSize        Int
+  uploadedAt      DateTime @default(now())
+
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id])
+  medicalRecordId Int
 }
 
 model AccessLog {

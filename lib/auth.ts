@@ -2,15 +2,21 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-export function generateToken(userId: number) {
-  return jwt.sign({ userId }, JWT_SECRET, {
+type TokenPayload = {
+  userId: number;
+  email: string;
+  hospitalId: number | null;
+};
+
+export function generateToken(payload: TokenPayload) {
+  return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "7d",
   });
 }
 
-export function verifyToken(token: string) {
+export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number };
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
   } catch (error) {
     return null;
   }
