@@ -31,15 +31,15 @@ model User {
 }
 
 model Patient {
-  id                    Int             @id @default(autoincrement())
+  id                    Int                   @id @default(autoincrement())
   name                  String
-  biometricHash         String          @unique
+  biometricHash         String                @unique
   bloodGroup            String?
   height                Float?
   weight                Float?
   allergies             String?
-  createdAt             DateTime        @default(now())
-  dateOfBirth           DateTime?       @db.Timestamp(6)
+  createdAt             DateTime              @default(now())
+  dateOfBirth           DateTime?             @db.Timestamp(6)
   gender                String?
   phone                 String?
   email                 String?
@@ -49,8 +49,10 @@ model Patient {
   emergencyContactPhone String?
   registeredById        Int?
   accessLogs            AccessLog[]
+  biometricCredentials  BiometricCredential[]
+  biometricSessions     BiometricSession[]
   medicalRecords        MedicalRecord[]
-  registeredBy          User?           @relation(fields: [registeredById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  registeredBy          User?                 @relation(fields: [registeredById], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model MedicalRecord {
@@ -95,4 +97,24 @@ model AccessLog {
   user            User           @relation(fields: [userId], references: [id], onDelete: SetNull, map: "AccessLog_doctorId_fkey")
   patient         Patient        @relation(fields: [patientId], references: [id])
   medicalRecord   MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onUpdate: NoAction, map: "AccessLog_record_fkey")
+}
+
+model BiometricSession {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId Int
+  challenge String
+  expiresAt DateTime  @db.Timestamp(6)
+  createdAt DateTime? @default(now()) @db.Timestamp(6)
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model BiometricCredential {
+  id           Int       @id @default(autoincrement())
+  patientId    Int
+  credentialId String    @unique
+  publicKey    String
+  counter      Int
+  deviceName   String?
+  createdAt    DateTime? @default(now()) @db.Timestamp(6)
+  patient      Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

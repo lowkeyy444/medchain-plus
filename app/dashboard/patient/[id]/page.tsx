@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 
 export default function PatientProfile() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function PatientProfile() {
   const [records, setRecords] = useState<any[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [qrCode, setQrCode] = useState<string | null>(null);
 
   const [visitType, setVisitType] = useState("");
   const [chiefComplaint, setChiefComplaint] = useState("");
@@ -149,6 +151,26 @@ export default function PatientProfile() {
     }
   }
 
+  async function handleRegisterBiometric() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("/api/biometric/register/session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ patientId: patient.id }),
+    });
+
+    const options = await res.json();
+
+    const url = window.location.origin + "/biometric/register?session=" + options.sessionId;
+
+    const dataUrl = await QRCode.toDataURL(url);
+    setQrCode(dataUrl);
+  }
+
   if (!patient) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -226,13 +248,28 @@ export default function PatientProfile() {
             <h2 className="text-xl font-semibold text-gray-900">
               Medical Records
             </h2>
-            <button
-              onClick={() => setShowForm((prev) => !prev)}
-              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
-            >
-              + Add Record
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRegisterBiometric}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
+              >
+                Register Biometric
+              </button>
+              <button
+                onClick={() => setShowForm((prev) => !prev)}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
+              >
+                + Add Record
+              </button>
+            </div>
           </div>
+
+          {qrCode && (
+            <div className="mb-6 flex flex-col items-center gap-3 border border-gray-200 p-6 rounded-xl bg-gray-50">
+              <p className="text-sm text-gray-700">Scan this QR code with patient's phone</p>
+              <img src={qrCode} alt="Biometric Registration QR Code" />
+            </div>
+          )}
 
           {/* Add Record Form */}
           {showForm && (
