@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save metadata in DB
-    await prisma.medicalAttachment.create({
+    const attachment = await prisma.medicalAttachment.create({
       data: {
         fileName: file.name,
         filePath,
@@ -56,8 +56,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 🔥 ADD THIS (UPLOAD LOGGING)
+    await prisma.accessLog.create({
+      data: {
+        userId: user.userId,
+        patientId: Number(patientId),
+        medicalRecordId: Number(recordId),
+        action: "UPLOAD_ATTACHMENT",
+      },
+    });
+
     return NextResponse.json({
       message: "File uploaded successfully",
+      attachment,
     });
 
   } catch (error) {

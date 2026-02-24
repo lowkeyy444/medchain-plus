@@ -128,7 +128,7 @@ export default function PatientProfile() {
     }
   }
 
-  async function handleViewFile(filePath: string) {
+  async function handleViewFile(filePath: string, recordId: number) {
     const token = localStorage.getItem("token");
 
     const res = await fetch("/api/attachments/view", {
@@ -137,7 +137,7 @@ export default function PatientProfile() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ filePath }),
+      body: JSON.stringify({ filePath, patientId: patient.id, recordId }),
     });
 
     const data = await res.json();
@@ -359,7 +359,7 @@ export default function PatientProfile() {
                       <div key={file.id} className="flex justify-between text-xs">
                         <span className="text-gray-600">📎 {file.fileName}</span>
                         <button
-                          onClick={() => handleViewFile(file.filePath)}
+                          onClick={() => handleViewFile(file.filePath, record.id)}
                           className="text-emerald-600 hover:underline"
                         >
                           View

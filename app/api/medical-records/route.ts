@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔥 Debug (remove later if you want)
     console.log("Decoded user:", user);
 
     const {
@@ -44,7 +43,6 @@ export async function POST(req: NextRequest) {
 
     const record = await prisma.medicalRecord.create({
       data: {
-        // 🔥 Proper relational connects (IMPORTANT)
         patient: {
           connect: { id: Number(patientId) },
         },
@@ -73,6 +71,16 @@ export async function POST(req: NextRequest) {
           },
         },
         attachments: true,
+      },
+    });
+
+    // 🔥 ACCESS LOGGING (NEW)
+    await prisma.accessLog.create({
+      data: {
+        userId: user.userId,
+        patientId: Number(patientId),
+        medicalRecordId: record.id,
+        action: "CREATE_RECORD",
       },
     });
 

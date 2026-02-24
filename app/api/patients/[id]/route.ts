@@ -16,7 +16,6 @@ export async function GET(
       );
     }
 
-    // Await dynamic params (Next.js 16)
     const { id } = await context.params;
     const patientId = Number(id);
 
@@ -35,7 +34,7 @@ export async function GET(
             attachments: true,
             doctor: {
               include: {
-                hospital: true,   // 🔥 include hospital info
+                hospital: true,
               },
             },
           },
@@ -52,6 +51,14 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    await prisma.accessLog.create({
+      data: {
+        userId: user.userId,
+        patientId: patientId,
+        action: "VIEW_PATIENT",
+      },
+    });
 
     return NextResponse.json(patient);
 
