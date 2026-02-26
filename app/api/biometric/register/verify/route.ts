@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
+import { isoBase64URL } from "@simplewebauthn/server/helpers";
+
+const RP_ID = "kamdyn-polyarchic-doretha.ngrok-free.dev";
+const ORIGIN = "https://kamdyn-polyarchic-doretha.ngrok-free.dev";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔥 Find session
+    // 1️⃣ Find session
     const biometricSession = await prisma.biometricSession.findUnique({
       where: { id: session },
     });
@@ -32,12 +36,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔥 Verify response
+    // 2️⃣ Verify registration response
     const verification = await verifyRegistrationResponse({
       response: credential,
       expectedChallenge: biometricSession.challenge,
-      expectedOrigin: "https://kamdyn-polyarchic-doretha.ngrok-free.dev",
-      expectedRPID: "kamdyn-polyarchic-doretha.ngrok-free.dev",
+      expectedOrigin: ORIGIN,
+      expectedRPID: RP_ID,
+      requireUserVerification: true,
     });
 
     const { verified, registrationInfo } = verification;
@@ -49,20 +54,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔥 Store credential (convert buffers → base64 strings)
+    // 3️⃣ Store credential CORRECTLY (base64url)
     await prisma.biometricCredential.create({
       data: {
         patientId: biometricSession.patientId,
-        credentialId: registrationInfo.credential.id,
-        publicKey: Buffer.from(
+        credentialId: registrationInfo.credential.id, // already base64url
+        publicKey: isoBase64URL.fromBuffer(
           registrationInfo.credential.publicKey
-        ).toString("base64"),
+        ), // ✅ FIXED
         counter: registrationInfo.credential.counter,
-        deviceName: credential.response?.transports?.[0] || "Unknown Device",
+        deviceName:
+          credential.response?.transports?.[0] || "Unknown Device",
       },
     });
 
-    // 🔥 Delete session
+    // 4️⃣ Delete session
     await prisma.biometricSession.delete({
       where: { id: session },
     });
@@ -70,7 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("Verification error:", error);
+    console.error("Registration verify error:", error);
 
     return NextResponse.json(
       { error: "Internal server error" },
