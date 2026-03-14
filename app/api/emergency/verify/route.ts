@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Determine redirect based on session type
+    // Determine redirect based on access type
     let redirect;
 
     if (updatedSession.accessType === "EMERGENCY") {

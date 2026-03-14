@@ -90,15 +90,19 @@ model MedicalAttachment {
 }
 
 model AccessLog {
-  id              Int            @id @default(autoincrement())
-  patientId       Int
+  id              Int       @id @default(autoincrement())
   userId          Int
-  action          String
-  createdAt       DateTime       @default(now())
+  patientId       Int
   medicalRecordId Int?
-  user            User           @relation(fields: [userId], references: [id], onDelete: SetNull, map: "AccessLog_doctorId_fkey")
-  patient         Patient        @relation(fields: [patientId], references: [id])
-  medicalRecord   MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onUpdate: NoAction, map: "AccessLog_record_fkey")
+  action          String
+  method          String?
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  medicalRecord   MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+
 }
 
 model BiometricSession {
@@ -133,5 +137,8 @@ model AccessSession {
 
   doctor    User     @relation("DoctorAccessSessions", fields: [doctorId], references: [id], onDelete: Cascade)
 
+  accessType String @default("NORMAL")
+
   @@index([status])
+
 }

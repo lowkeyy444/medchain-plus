@@ -85,16 +85,21 @@ export default function Dashboard() {
           border-radius: 10px;
           transition: background 0.15s, color 0.15s;
         }
-        .db-nav-item:hover {
-          background: #f3f4f6;
-          color: #111827;
-        }
+        .db-nav-item:hover { background: #f3f4f6; color: #111827; }
         .db-nav-item.active {
           background: #f0fdf9;
           color: #065f46;
           font-weight: 600;
         }
         .db-nav-item.active svg { stroke: #10b981; }
+        .db-nav-item.emergency { color: #6b7280; }
+        .db-nav-item.emergency:hover { background: #fef2f2; color: #dc2626; }
+
+        .db-nav-divider {
+          height: 1px;
+          background: #f3f4f6;
+          margin: 8px 0;
+        }
 
         .db-nav-icon {
           width: 16px; height: 16px;
@@ -132,9 +137,7 @@ export default function Dashboard() {
           max-width: 900px;
         }
 
-        .db-welcome {
-          margin-bottom: 40px;
-        }
+        .db-welcome { margin-bottom: 40px; }
 
         .db-eyebrow {
           display: inline-flex;
@@ -161,10 +164,7 @@ export default function Dashboard() {
           letter-spacing: -0.02em;
           margin-bottom: 6px;
         }
-        .db-title em {
-          font-style: italic;
-          color: #10b981;
-        }
+        .db-title em { font-style: italic; color: #10b981; }
 
         .db-subtitle {
           font-size: 0.9rem;
@@ -197,6 +197,23 @@ export default function Dashboard() {
           transform: translateY(-2px);
         }
 
+        /* Emergency card variant */
+        .db-card.db-card-emergency {
+          grid-column: 1 / -1;
+          flex-direction: row;
+          align-items: center;
+          gap: 20px;
+          background: white;
+          border-color: #fecaca;
+        }
+        .db-card.db-card-emergency:hover {
+          box-shadow: 0 8px 32px rgba(220,38,38,0.10);
+          border-color: #fca5a5;
+          transform: translateY(-2px);
+        }
+        .db-card.db-card-emergency .db-card-body { flex: 1; }
+        .db-card.db-card-emergency .db-card-arrow { color: #dc2626; margin-top: 0; }
+
         .db-card-icon {
           width: 44px; height: 44px;
           background: #f0fdf9;
@@ -206,6 +223,12 @@ export default function Dashboard() {
           align-items: center;
           justify-content: center;
           color: #10b981;
+          flex-shrink: 0;
+        }
+        .db-card-icon.emergency {
+          background: #fef2f2;
+          border-color: #fecaca;
+          color: #dc2626;
         }
 
         .db-card-title {
@@ -230,6 +253,17 @@ export default function Dashboard() {
           font-size: 0.8rem;
           font-weight: 600;
           color: #10b981;
+          white-space: nowrap;
+        }
+
+        .db-section-label {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #9ca3af;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+          margin-bottom: 12px;
+          margin-top: 32px;
         }
 
         @keyframes db-fade-up {
@@ -240,11 +274,13 @@ export default function Dashboard() {
         .db-d1 { animation-delay: 0.05s; }
         .db-d2 { animation-delay: 0.12s; }
         .db-d3 { animation-delay: 0.20s; }
+        .db-d4 { animation-delay: 0.28s; }
 
         @media (max-width: 768px) {
           .db-sidebar { display: none; }
           .db-main { padding: 32px 24px; }
           .db-cards { grid-template-columns: 1fr; }
+          .db-card.db-card-emergency { flex-direction: column; align-items: flex-start; }
         }
       `}</style>
 
@@ -285,6 +321,15 @@ export default function Dashboard() {
               </svg>
               Biometric Search
             </Link>
+
+            <div className="db-nav-divider"/>
+
+            <Link href="/dashboard/emergency" className="db-nav-item emergency">
+              <svg className="db-nav-icon" viewBox="0 0 24 24" fill="none" strokeWidth="1.75">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Emergency Access
+            </Link>
           </nav>
 
           <div className="db-sidebar-footer">
@@ -317,7 +362,8 @@ export default function Dashboard() {
             <p className="db-subtitle">What would you like to do today?</p>
           </div>
 
-          {/* Cards */}
+          {/* Standard actions */}
+          <p className="db-section-label db-anim db-d1">Quick Actions</p>
           <div className="db-cards">
 
             <Link href="/dashboard/register-patient" className="db-card db-anim db-d2">
@@ -360,10 +406,29 @@ export default function Dashboard() {
               </div>
             </Link>
 
+            {/* Emergency — full width, visually separated */}
+            <p className="db-section-label db-anim db-d3" style={{gridColumn:"1/-1", marginTop:12}}>Emergency</p>
+            <Link href="/dashboard/emergency" className="db-card db-card-emergency db-anim db-d4">
+              <div className="db-card-icon emergency">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+              </div>
+              <div className="db-card-body">
+                <p className="db-card-title">Emergency Access</p>
+                <p className="db-card-desc">Generate a one-time biometric QR for immediate access to a patient's critical record.</p>
+              </div>
+              <div className="db-card-arrow">
+                Open emergency access
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </Link>
+
           </div>
 
         </main>
-
       </div>
     </>
   );

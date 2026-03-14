@@ -275,7 +275,7 @@ export default function LoginPage() {
             <div className="lp-divider-line"/>
           </div>
 
-          <p className="lp-trust">End-to-end encrypted · Biometric verified · HIPAA compliant</p>
+          {/* <p className="lp-trust">End-to-end encrypted · Biometric verified · HIPAA compliant</p> */}
 
         </div>
       </div>

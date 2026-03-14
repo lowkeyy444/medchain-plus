@@ -42,6 +42,21 @@ export async function GET(
             createdAt: "desc",
           },
         },
+
+        accessLogs: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 10,
+        },
       },
     });
 
@@ -57,6 +72,11 @@ export async function GET(
         userId: user.userId,
         patientId: patientId,
         action: "VIEW_PATIENT",
+        method: "BIOMETRIC",
+        ipAddress:
+          req.headers.get("x-forwarded-for") ||
+          req.headers.get("x-real-ip") ||
+          "unknown",
       },
     });
 
