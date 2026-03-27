@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/getUserFromRequest";
+import { generateRecordHash } from "@/lib/hash";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +42,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 🧠 STEP 1 — Get last record for chain
+    const lastRecord = await prisma.medicalRecord.findFirst({
+      where: { patientId: Number(patientId) },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const previousHash = lastRecord?.recordHash || "GENESIS";
+
+    // 🧠 STEP 2 — Generate hash (deterministic)
+    const recordHash = generateRecordHash({
+      patientId: Number(patientId),
+      doctorId: user.userId,
+      diagnosis,
+      prescription,
+      notes,
+      visitType,
+      chiefComplaint,
+      vitals,
+      investigations,
+      previousHash,
+    });
+
+    // 🧱 STEP 3 — Create record with hashes
     const record = await prisma.medicalRecord.create({
       data: {
         patient: {
@@ -63,6 +87,10 @@ export async function POST(req: NextRequest) {
           ? new Date(followUpDate)
           : null,
         notes,
+
+        // ✅ MedChain fields
+        previousHash,
+        recordHash,
       },
       include: {
         doctor: {
@@ -74,7 +102,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 🔥 ACCESS LOGGING (NEW)
+    // 🔥 ACCESS LOGGING (UNCHANGED)
     await prisma.accessLog.create({
       data: {
         userId: user.userId,

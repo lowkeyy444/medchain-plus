@@ -17,6 +17,7 @@ export default function PatientProfile() {
   const [showForm, setShowForm] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [savingRecord, setSavingRecord] = useState(false);
+  const [integrity, setIntegrity] = useState<"loading" | "valid" | "invalid">("loading");
 
   const [visitType, setVisitType] = useState("");
   const [chiefComplaint, setChiefComplaint] = useState("");
@@ -28,6 +29,19 @@ export default function PatientProfile() {
   const [notes, setNotes] = useState("");
 
   useEffect(() => { loadPatient(); }, [id]);
+
+  useEffect(() => {
+    async function checkIntegrity() {
+      try {
+        const res = await fetch(`/api/patients/${id}/verify-chain`);
+        const data = await res.json();
+        setIntegrity(data.valid ? "valid" : "invalid");
+      } catch {
+        setIntegrity("invalid");
+      }
+    }
+    checkIntegrity();
+  }, [id]);
 
   async function loadPatient() {
     const token = localStorage.getItem("token");
@@ -163,11 +177,8 @@ export default function PatientProfile() {
           gap: 20px;
           max-width: 1100px;
         }
-        /* Patient header spans full width */
         .pp-header-card { grid-column: 1 / -1; }
-        /* Left column: records */
         .pp-left-col { grid-column: 1; display:flex; flex-direction:column; gap:20px; min-width:0; }
-        /* Right column: access log — sticky so it stays in view while scrolling records */
         .pp-right-col {
           grid-column: 2;
           grid-row: 2;
@@ -210,6 +221,36 @@ export default function PatientProfile() {
         .pp-btn-green:hover { background:#059669; box-shadow:0 4px 12px rgba(16,185,129,0.3); transform:translateY(-1px); }
         .pp-btn-outline { background:white; color:#374151; border:1px solid #e5e7eb; }
         .pp-btn-outline:hover { background:#f9fafb; border-color:#d1d5db; }
+
+        /* ── INTEGRITY BANNER ── */
+        .pp-integrity-banner {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 16px; border-radius: 12px;
+          font-size: 0.78rem; font-weight: 600;
+          margin-bottom: 18px;
+          border: 1px solid transparent;
+        }
+        .pp-integrity-banner.loading {
+          background: #f9fafb; border-color: #e5e7eb; color: #9ca3af;
+        }
+        .pp-integrity-banner.valid {
+          background: #f0fdf9; border-color: #d1fae5; color: #065f46;
+        }
+        .pp-integrity-banner.invalid {
+          background: #fef2f2; border-color: #fecaca; color: #991b1b;
+        }
+        .pp-integrity-dot {
+          width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .pp-integrity-dot.loading { background: #d1d5db; }
+        .pp-integrity-dot.valid   { background: #10b981; }
+        .pp-integrity-dot.invalid { background: #ef4444; }
+        @keyframes pp-pulse {
+          0%, 100% { opacity: 1; } 50% { opacity: 0.35; }
+        }
+        .pp-integrity-dot.loading { animation: pp-pulse 1.4s ease-in-out infinite; }
+        .pp-integrity-label { flex: 1; }
+        .pp-integrity-icon { opacity: 0.7; }
 
         /* QR */
         .pp-qr-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:18px; text-align:center; }
@@ -281,7 +322,6 @@ export default function PatientProfile() {
           overflow-y: auto;
           flex: 1;
           padding-bottom: 20px;
-          /* subtle scroll */
           scrollbar-width: thin;
           scrollbar-color: #e5e7eb transparent;
         }
@@ -530,6 +570,29 @@ export default function PatientProfile() {
                     </div>
                   </form>
                 )}
+
+                {/* ── INTEGRITY STATUS BANNER ── */}
+                <div className={`pp-integrity-banner ${integrity}`}>
+                  <div className={`pp-integrity-dot ${integrity}`} />
+                  <span className="pp-integrity-label">
+                    {integrity === "loading" && "Checking record integrity…"}
+                    {integrity === "valid"   && "Record Integrity Verified — Tamper-Proof"}
+                    {integrity === "invalid" && "Data Tampering Detected"}
+                  </span>
+                  {integrity === "valid" && (
+                    <svg className="pp-integrity-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+                      <polyline points="9 12 11 14 15 10"/>
+                    </svg>
+                  )}
+                  {integrity === "invalid" && (
+                    <svg className="pp-integrity-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  )}
+                </div>
 
                 {/* Records list */}
                 {records.length === 0 ? (
