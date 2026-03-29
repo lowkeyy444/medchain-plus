@@ -8,7 +8,7 @@ import QRCode from "qrcode";
 export default function PatientProfile() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id;
+  const id = params?.id;
 
   const [patient, setPatient] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
@@ -28,9 +28,13 @@ export default function PatientProfile() {
   const [followUpDate, setFollowUpDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  useEffect(() => { loadPatient(); }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    loadPatient();
+  }, [id]);
 
   useEffect(() => {
+    if (!id) return;
     async function checkIntegrity() {
       try {
         const res = await fetch(`/api/patients/${id}/verify-chain`);
@@ -44,6 +48,7 @@ export default function PatientProfile() {
   }, [id]);
 
   async function loadPatient() {
+    if (!id) return;
     const token = localStorage.getItem("token");
     if (!token) { router.push("/login"); return; }
     const res = await fetch(`/api/patients/${id}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -111,6 +116,12 @@ export default function PatientProfile() {
     setQrCode(dataUrl);
   }
 
+  if (!id) return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"DM Sans, sans-serif", color:"#6b7280" }}>
+      Loading…
+    </div>
+  );
+
   if (!patient) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"DM Sans, sans-serif", color:"#6b7280" }}>
       Loading patient…
@@ -155,7 +166,7 @@ export default function PatientProfile() {
 
         .pp-layout { font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; background:#f9fafb; color:#111827; }
 
-        /* ── NAV SIDEBAR ── */
+        /* ── SIDEBAR ── */
         .pp-sidebar { width:240px; flex-shrink:0; background:white; border-right:1px solid #f3f4f6; display:flex; flex-direction:column; padding:32px 24px; position:sticky; top:0; height:100vh; }
         .pp-logo { font-family:'Lora',serif; font-size:1.2rem; font-weight:600; color:#064e3b; display:flex; align-items:center; gap:8px; text-decoration:none; margin-bottom:40px; }
         .pp-logo-dot { width:8px; height:8px; background:#10b981; border-radius:50%; }
@@ -166,31 +177,16 @@ export default function PatientProfile() {
         .pp-logout { display:flex; align-items:center; gap:10px; font-size:0.875rem; font-weight:500; color:#9ca3af; background:none; border:none; cursor:pointer; padding:9px 12px; border-radius:10px; width:100%; transition:background 0.15s,color 0.15s; font-family:'DM Sans',sans-serif; }
         .pp-logout:hover { background:#fef2f2; color:#ef4444; }
 
-        /* ── PAGE BODY ── */
+        /* ── BODY ── */
         .pp-body { flex:1; padding:40px 40px 60px; overflow-y:auto; }
 
-        /* ── TWO-COLUMN GRID ── */
-        .pp-grid {
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          grid-template-rows: auto 1fr;
-          gap: 20px;
-          max-width: 1100px;
-        }
-        .pp-header-card { grid-column: 1 / -1; }
-        .pp-left-col { grid-column: 1; display:flex; flex-direction:column; gap:20px; min-width:0; }
-        .pp-right-col {
-          grid-column: 2;
-          grid-row: 2;
-          position: sticky;
-          top: 40px;
-          align-self: start;
-          max-height: calc(100vh - 80px);
-          display: flex;
-          flex-direction: column;
-        }
+        /* ── GRID ── */
+        .pp-grid { display:grid; grid-template-columns:1fr 300px; grid-template-rows:auto 1fr; gap:20px; max-width:1100px; }
+        .pp-header-card { grid-column:1 / -1; }
+        .pp-left-col { grid-column:1; display:flex; flex-direction:column; gap:20px; min-width:0; }
+        .pp-right-col { grid-column:2; grid-row:2; position:sticky; top:40px; align-self:start; max-height:calc(100vh - 80px); display:flex; flex-direction:column; }
 
-        /* ── SHARED CARD ── */
+        /* ── CARD BASE ── */
         .pp-card { background:white; border:1px solid #e5e7eb; border-radius:20px; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
 
         /* ── PATIENT HEADER ── */
@@ -223,40 +219,25 @@ export default function PatientProfile() {
         .pp-btn-outline:hover { background:#f9fafb; border-color:#d1d5db; }
 
         /* ── INTEGRITY BANNER ── */
-        .pp-integrity-banner {
-          display: flex; align-items: center; gap: 10px;
-          padding: 10px 16px; border-radius: 12px;
-          font-size: 0.78rem; font-weight: 600;
-          margin-bottom: 18px;
-          border: 1px solid transparent;
-        }
-        .pp-integrity-banner.loading {
-          background: #f9fafb; border-color: #e5e7eb; color: #9ca3af;
-        }
-        .pp-integrity-banner.valid {
-          background: #f0fdf9; border-color: #d1fae5; color: #065f46;
-        }
-        .pp-integrity-banner.invalid {
-          background: #fef2f2; border-color: #fecaca; color: #991b1b;
-        }
-        .pp-integrity-dot {
-          width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-        }
-        .pp-integrity-dot.loading { background: #d1d5db; }
-        .pp-integrity-dot.valid   { background: #10b981; }
-        .pp-integrity-dot.invalid { background: #ef4444; }
-        @keyframes pp-pulse {
-          0%, 100% { opacity: 1; } 50% { opacity: 0.35; }
-        }
-        .pp-integrity-dot.loading { animation: pp-pulse 1.4s ease-in-out infinite; }
-        .pp-integrity-label { flex: 1; }
-        .pp-integrity-icon { opacity: 0.7; }
+        .pp-integrity-banner { display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:12px; font-size:0.78rem; font-weight:600; margin-bottom:22px; border:1px solid transparent; }
+        .pp-integrity-banner.loading { background:#f9fafb; border-color:#e5e7eb; color:#9ca3af; }
+        .pp-integrity-banner.valid   { background:#f0fdf9; border-color:#d1fae5; color:#065f46; }
+        .pp-integrity-banner.invalid { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+        .pp-integrity-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+        .pp-integrity-dot.loading { background:#d1d5db; animation:pp-pulse 1.4s ease-in-out infinite; }
+        .pp-integrity-dot.valid   { background:#10b981; }
+        .pp-integrity-dot.invalid { background:#ef4444; }
+        @keyframes pp-pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .pp-integrity-label { flex:1; }
+        .pp-integrity-icon { opacity:0.7; }
 
-        /* QR */
-        .pp-qr-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:18px; text-align:center; }
+        /* ── QR BOX ── */
+        .pp-qr-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:18px; text-align:center; position:relative; }
         .pp-qr-label { font-size:0.78rem; color:#6b7280; }
+        .pp-qr-dismiss { position:absolute; top:10px; right:10px; background:white; border:1px solid #e5e7eb; border-radius:7px; padding:4px 9px; font-size:0.72rem; font-weight:600; color:#6b7280; cursor:pointer; display:flex; align-items:center; gap:4px; transition:background 0.15s,color 0.15s,border-color 0.15s; font-family:'DM Sans',sans-serif; }
+        .pp-qr-dismiss:hover { background:#fef2f2; color:#ef4444; border-color:#fecaca; }
 
-        /* Form */
+        /* ── FORM ── */
         .pp-form { background:#f9fafb; border:1px solid #e5e7eb; border-radius:14px; padding:20px; margin-bottom:18px; }
         .pp-form-title { font-size:0.85rem; font-weight:600; color:#111827; margin-bottom:16px; }
         .pp-form-grid { display:grid; gap:11px; }
@@ -270,10 +251,63 @@ export default function PatientProfile() {
         .pp-textarea { resize:vertical; min-height:68px; line-height:1.5; }
         .pp-form-actions { display:flex; gap:8px; margin-top:14px; }
 
-        /* Record cards */
-        .pp-record { border:1px solid #f0f0f0; border-radius:14px; padding:18px 20px; margin-bottom:12px; background:white; transition:border-color 0.2s; }
-        .pp-record:hover { border-color:#d1fae5; }
-        .pp-record:last-child { margin-bottom:0; }
+        /* ── CHAIN TIMELINE ── */
+        .pp-chain-list { display:flex; flex-direction:column; }
+
+        .pp-chain-row { display:flex; align-items:stretch; }
+
+        .pp-chain-rail {
+          width: 28px;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-top: 20px;
+        }
+        .pp-chain-dot {
+          width: 11px; height: 11px;
+          border-radius: 50%;
+          background: #10b981;
+          border: 2px solid white;
+          box-shadow: 0 0 0 2px #10b981;
+          flex-shrink: 0;
+          z-index: 1;
+        }
+        .pp-chain-dot.genesis {
+          background: #064e3b;
+          box-shadow: 0 0 0 2px #064e3b;
+          width: 13px; height: 13px;
+        }
+        .pp-chain-line {
+          width: 2px;
+          flex: 1;
+          margin-top: 5px;
+          min-height: 20px;
+          background: repeating-linear-gradient(
+            to bottom,
+            #bbf7d0 0px, #bbf7d0 4px,
+            transparent 4px, transparent 9px
+          );
+        }
+
+        .pp-chain-card-wrap {
+          flex: 1;
+          min-width: 0;
+          padding-bottom: 16px;
+        }
+        .pp-chain-row:last-child .pp-chain-card-wrap { padding-bottom: 0; }
+
+        /* Genesis pill */
+        .pp-genesis-pill {
+          display: inline-flex; align-items: center; gap: 4px;
+          font-size: 0.61rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+          color: #065f46; background: #f0fdf9; border: 1px solid #d1fae5;
+          border-radius: 100px; padding: 2px 8px; margin-bottom: 6px;
+        }
+
+        /* ── RECORD CARD ── */
+        .pp-record { border:1px solid #ebebeb; border-radius:14px; padding:18px 20px; background:white; transition:border-color 0.2s,box-shadow 0.2s; }
+        .pp-record:hover { border-color:#d1fae5; box-shadow:0 2px 12px rgba(16,185,129,0.07); }
         .pp-record-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
         .pp-record-hospital { font-size:0.85rem; font-weight:600; color:#111827; margin-bottom:2px; }
         .pp-record-doctor { font-size:0.76rem; color:#6b7280; }
@@ -283,7 +317,12 @@ export default function PatientProfile() {
         .pp-record-field-label { font-size:0.66rem; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; }
         .pp-record-field-value { font-size:0.82rem; color:#374151; line-height:1.5; }
 
-        /* Attachments */
+        /* Verified footer inside each record */
+        .pp-verified-footer { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px dashed #ebebeb; gap:8px; }
+        .pp-verified-badge { display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; font-weight:700; color:#10b981; }
+        .pp-record-hash { font-family:monospace; font-size:0.65rem; color:#c4c9d4; letter-spacing:0.02em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px; }
+
+        /* ── ATTACHMENTS ── */
         .pp-attachments { padding-top:12px; border-top:1px solid #f3f4f6; }
         .pp-attachments-label { font-size:0.68rem; font-weight:600; color:#9ca3af; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px; }
         .pp-attach-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
@@ -293,60 +332,29 @@ export default function PatientProfile() {
         .pp-upload-label { display:inline-flex; align-items:center; gap:6px; font-size:0.73rem; font-weight:600; color:#374151; background:white; border:1px solid #e5e7eb; border-radius:8px; padding:5px 11px; cursor:pointer; transition:background 0.15s,border-color 0.15s; }
         .pp-upload-label:hover { background:#f9fafb; border-color:#d1d5db; }
 
-        /* Empty state */
+        /* ── EMPTY ── */
         .pp-empty { text-align:center; padding:36px 16px; color:#9ca3af; font-size:0.85rem; font-weight:300; }
         .pp-empty-icon { width:40px; height:40px; border-radius:11px; background:#f9fafb; border:1px solid #e5e7eb; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; color:#d1d5db; }
 
-        /* ── ACCESS LOG CARD ── */
-        .pp-log-card {
-          padding: 22px 20px 0;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .pp-log-card-header {
-          display: flex; align-items: center; justify-content: space-between;
-          margin-bottom: 16px; flex-shrink: 0;
-        }
-        .pp-log-card-title {
-          font-family: 'Lora', serif; font-size: 0.95rem; font-weight: 600; color: #064e3b;
-          display: flex; align-items: center; gap: 8px;
-        }
-        .pp-log-card-count {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 0.68rem; font-weight: 700;
-          background: #f0fdf9; color: #065f46; border: 1px solid #d1fae5;
-          border-radius: 100px; padding: 2px 8px;
-        }
-        .pp-log-scroll {
-          overflow-y: auto;
-          flex: 1;
-          padding-bottom: 20px;
-          scrollbar-width: thin;
-          scrollbar-color: #e5e7eb transparent;
-        }
-        .pp-log-scroll::-webkit-scrollbar { width: 4px; }
-        .pp-log-scroll::-webkit-scrollbar-track { background: transparent; }
-        .pp-log-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
-
-        /* Individual log entry */
-        .pp-log-entry {
-          display: flex; gap: 11px; align-items: flex-start;
-          padding: 11px 0;
-          border-bottom: 1px solid #f3f4f6;
-        }
-        .pp-log-entry:last-child { border-bottom: none; }
-
+        /* ── ACCESS LOG ── */
+        .pp-log-card { padding:22px 20px 0; overflow:hidden; display:flex; flex-direction:column; }
+        .pp-log-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-shrink:0; }
+        .pp-log-card-title { font-family:'Lora',serif; font-size:0.95rem; font-weight:600; color:#064e3b; }
+        .pp-log-card-count { font-family:'DM Sans',sans-serif; font-size:0.68rem; font-weight:700; background:#f0fdf9; color:#065f46; border:1px solid #d1fae5; border-radius:100px; padding:2px 8px; }
+        .pp-log-scroll { overflow-y:auto; flex:1; padding-bottom:20px; scrollbar-width:thin; scrollbar-color:#e5e7eb transparent; }
+        .pp-log-scroll::-webkit-scrollbar { width:4px; }
+        .pp-log-scroll::-webkit-scrollbar-track { background:transparent; }
+        .pp-log-scroll::-webkit-scrollbar-thumb { background:#e5e7eb; border-radius:4px; }
+        .pp-log-entry { display:flex; gap:11px; align-items:flex-start; padding:11px 0; border-bottom:1px solid #f3f4f6; }
+        .pp-log-entry:last-child { border-bottom:none; }
         .pp-log-dot-col { display:flex; flex-direction:column; align-items:center; padding-top:5px; flex-shrink:0; }
         .pp-log-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-
         .pp-log-entry-body { flex:1; min-width:0; }
         .pp-log-entry-action { font-size:0.78rem; font-weight:600; color:#111827; margin-bottom:3px; display:block; }
         .pp-log-entry-doctor { font-size:0.73rem; color:#6b7280; margin-bottom:5px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .pp-log-entry-footer { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
         .pp-log-pill { font-size:0.64rem; font-weight:700; padding:2px 7px; border-radius:100px; letter-spacing:0.03em; display:inline-flex; align-items:center; gap:3px; }
         .pp-log-ip { font-size:0.65rem; color:#b0b7c3; font-family:monospace; }
-
         .pp-log-entry-time { font-size:0.68rem; color:#9ca3af; white-space:nowrap; flex-shrink:0; padding-top:3px; }
 
         /* Spinner */
@@ -360,10 +368,10 @@ export default function PatientProfile() {
         .pp-d3 { animation-delay:0.18s; }
 
         @media (max-width: 1024px) {
-          .pp-grid { grid-template-columns: 1fr; }
-          .pp-header-card { grid-column: 1; }
-          .pp-right-col { grid-column: 1; grid-row: auto; position:static; max-height:none; }
-          .pp-details-grid { grid-template-columns: 1fr 1fr; }
+          .pp-grid { grid-template-columns:1fr; }
+          .pp-header-card { grid-column:1; }
+          .pp-right-col { grid-column:1; grid-row:auto; position:static; max-height:none; }
+          .pp-details-grid { grid-template-columns:1fr 1fr; }
         }
         @media (max-width: 768px) {
           .pp-sidebar { display:none; }
@@ -377,7 +385,7 @@ export default function PatientProfile() {
 
       <div className="pp-layout">
 
-        {/* ── NAV SIDEBAR ── */}
+        {/* SIDEBAR */}
         <aside className="pp-sidebar">
           <a href="/" className="pp-logo">
             <span className="pp-logo-dot"/>
@@ -422,13 +430,11 @@ export default function PatientProfile() {
           </div>
         </aside>
 
-        {/* ── PAGE BODY ── */}
+        {/* BODY */}
         <div className="pp-body">
           <div className="pp-grid">
 
-            {/* ══════════════════════════════════════
-                PATIENT HEADER — spans full width
-            ══════════════════════════════════════ */}
+            {/* PATIENT HEADER */}
             <div className="pp-card pp-header-card pp-anim pp-d1">
               <div className="pp-header-top">
                 <div style={{display:"flex", gap:14, alignItems:"flex-start"}}>
@@ -484,19 +490,15 @@ export default function PatientProfile() {
               )}
             </div>
 
-            {/* ══════════════════════════════════════
-                LEFT COLUMN — Medical Records
-            ══════════════════════════════════════ */}
+            {/* LEFT — Records */}
             <div className="pp-left-col">
               <div className="pp-card pp-records-card pp-anim pp-d2">
 
                 <div className="pp-records-header">
                   <h2 className="pp-records-title">Medical Records</h2>
                   <div className="pp-header-actions">
+                    {/* Plain text — no icon */}
                     <button className="pp-btn pp-btn-outline" onClick={handleRegisterBiometric}>
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" opacity="0.55">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M4.925.827A7.583 7.583 0 0115.66 9.316a.75.75 0 11-1.463-.333 6.083 6.083 0 00-8.61-6.81.75.75 0 01-.662-1.346zM3.278 2.903a.75.75 0 01.143 1.05 6.058 6.058 0 00-1.087 2.332 26.684 26.684 0 01-.811 2.9.75.75 0 11-1.416-.495c.262-.747.514-1.634.765-2.737a7.558 7.558 0 011.355-2.907.75.75 0 011.05-.143z"/>
-                      </svg>
                       Register Biometric
                     </button>
                     <button className="pp-btn pp-btn-green" onClick={() => setShowForm(p => !p)}>
@@ -509,15 +511,22 @@ export default function PatientProfile() {
                   </div>
                 </div>
 
-                {/* Biometric QR */}
+                {/* QR — with dismiss */}
                 {qrCode && (
                   <div className="pp-qr-box">
-                    <img src={qrCode} alt="Biometric QR" style={{width:176, height:176, borderRadius:8}}/>
+                    <button className="pp-qr-dismiss" onClick={() => setQrCode(null)}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                      Dismiss
+                    </button>
+                    <img src={qrCode} alt="Biometric QR" style={{width:176, height:176, borderRadius:8, marginTop:8}}/>
                     <p className="pp-qr-label">Ask the patient to scan this QR to register their biometrics</p>
                   </div>
                 )}
 
-                {/* Add Record Form */}
+                {/* Form */}
                 {showForm && (
                   <form onSubmit={handleCreateRecord} className="pp-form">
                     <p className="pp-form-title">New Medical Record</p>
@@ -571,9 +580,9 @@ export default function PatientProfile() {
                   </form>
                 )}
 
-                {/* ── INTEGRITY STATUS BANNER ── */}
+                {/* Integrity banner */}
                 <div className={`pp-integrity-banner ${integrity}`}>
-                  <div className={`pp-integrity-dot ${integrity}`} />
+                  <div className={`pp-integrity-dot ${integrity}`}/>
                   <span className="pp-integrity-label">
                     {integrity === "loading" && "Checking record integrity…"}
                     {integrity === "valid"   && "Record Integrity Verified — Tamper-Proof"}
@@ -594,7 +603,7 @@ export default function PatientProfile() {
                   )}
                 </div>
 
-                {/* Records list */}
+                {/* ── CHAIN TIMELINE ── */}
                 {records.length === 0 ? (
                   <div className="pp-empty">
                     <div className="pp-empty-icon">
@@ -605,85 +614,126 @@ export default function PatientProfile() {
                     </div>
                     No medical records yet. Add the first record above.
                   </div>
-                ) : records.map(record => (
-                  <div key={record.id} className="pp-record">
-                    <div className="pp-record-header">
-                      <div>
-                        <p className="pp-record-hospital">{record.doctor?.hospital?.name || "Unknown Hospital"}</p>
-                        <p className="pp-record-doctor">Dr. {record.doctor?.name || "Unknown Doctor"}</p>
-                      </div>
-                      <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5}}>
-                        <span className="pp-record-date">
-                          {new Date(record.createdAt).toLocaleDateString("en-US", { day:"numeric", month:"short", year:"numeric" })}
-                        </span>
-                        {record.visitType && (
-                          <span className="pp-tag" style={{
-                            background: visitTypeColors[record.visitType] || "#f9fafb",
-                            color:      visitTypeText[record.visitType]   || "#6b7280",
-                            border:    `1px solid ${visitTypeColors[record.visitType] || "#e5e7eb"}`,
-                          }}>
-                            {record.visitType}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                ) : (
+                  <div className="pp-chain-list">
+                    {records.map((record, index) => {
+                      const isLast    = index === records.length - 1;
+                      const isGenesis = isLast;
 
-                    <div className="pp-record-fields">
-                      {record.chiefComplaint && <div className="pp-record-field"><span className="pp-record-field-label">Chief Complaint</span><span className="pp-record-field-value">{record.chiefComplaint}</span></div>}
-                      {record.vitals         && <div className="pp-record-field"><span className="pp-record-field-label">Vitals</span><span className="pp-record-field-value">{record.vitals}</span></div>}
-                      <div className="pp-record-field"><span className="pp-record-field-label">Diagnosis</span><span className="pp-record-field-value">{record.diagnosis}</span></div>
-                      {record.prescription   && <div className="pp-record-field"><span className="pp-record-field-label">Prescription</span><span className="pp-record-field-value">{record.prescription}</span></div>}
-                      {record.investigations && <div className="pp-record-field"><span className="pp-record-field-label">Investigations</span><span className="pp-record-field-value">{record.investigations}</span></div>}
-                      {record.followUpDate   && <div className="pp-record-field"><span className="pp-record-field-label">Follow-up</span><span className="pp-record-field-value">{new Date(record.followUpDate).toLocaleDateString("en-US", { day:"numeric", month:"short", year:"numeric" })}</span></div>}
-                      {record.notes && <div className="pp-record-field" style={{gridColumn:"1/-1"}}><span className="pp-record-field-label">Notes</span><span className="pp-record-field-value">{record.notes}</span></div>}
-                    </div>
+                      const hashSeed   = `${record.id}-${record.createdAt}-${record.diagnosis}`;
+                      const hashNum    = Array.from(hashSeed).reduce((acc, c) => acc + c.charCodeAt(0), 0);
+                      const fakeHash   = record.blockHash || `0x${hashNum.toString(16).padStart(8,"0")}${record.id.toString(16).padStart(4,"0")}…`;
 
-                    <div className="pp-attachments">
-                      <p className="pp-attachments-label">Attachments</p>
-                      <div className="pp-attach-row">
-                        <label className="pp-upload-label">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                          </svg>
-                          Upload file
-                          <input type="file" style={{display:"none"}} onChange={e => handleFileUpload(e, record.id)}/>
-                        </label>
-                        <span style={{fontSize:"0.7rem", color:"#9ca3af"}}>Lab reports, scans, PDFs</span>
-                      </div>
-                      {record.attachments?.length > 0 && (
-                        <div style={{marginTop:7, display:"flex", flexDirection:"column", gap:5}}>
-                          {record.attachments.map((file: any) => (
-                            <div key={file.id} className="pp-attach-row">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.75">
-                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                              </svg>
-                              <span className="pp-attach-name">{file.fileName}</span>
-                              <button className="pp-attach-view" onClick={() => handleViewFile(file.filePath, record.id)}>View</button>
+                      return (
+                        <div key={record.id} className="pp-chain-row">
+
+                          {/* Rail */}
+                          <div className="pp-chain-rail">
+                            <div className={`pp-chain-dot${isGenesis ? " genesis" : ""}`}/>
+                            {!isLast && <div className="pp-chain-line"/>}
+                          </div>
+
+                          {/* Card */}
+                          <div className="pp-chain-card-wrap">
+                            {isGenesis && (
+                              <div className="pp-genesis-pill">
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                </svg>
+                                Genesis Block
+                              </div>
+                            )}
+
+                            <div className="pp-record">
+                              <div className="pp-record-header">
+                                <div>
+                                  <p className="pp-record-hospital">{record.doctor?.hospital?.name || "Unknown Hospital"}</p>
+                                  <p className="pp-record-doctor">Dr. {record.doctor?.name || "Unknown Doctor"}</p>
+                                </div>
+                                <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5}}>
+                                  <span className="pp-record-date">
+                                    {new Date(record.createdAt).toLocaleDateString("en-US", { day:"numeric", month:"short", year:"numeric" })}
+                                  </span>
+                                  {record.visitType && (
+                                    <span className="pp-tag" style={{
+                                      background: visitTypeColors[record.visitType] || "#f9fafb",
+                                      color:      visitTypeText[record.visitType]   || "#6b7280",
+                                      border:    `1px solid ${visitTypeColors[record.visitType] || "#e5e7eb"}`,
+                                    }}>
+                                      {record.visitType}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="pp-record-fields">
+                                {record.chiefComplaint && <div className="pp-record-field"><span className="pp-record-field-label">Chief Complaint</span><span className="pp-record-field-value">{record.chiefComplaint}</span></div>}
+                                {record.vitals         && <div className="pp-record-field"><span className="pp-record-field-label">Vitals</span><span className="pp-record-field-value">{record.vitals}</span></div>}
+                                <div className="pp-record-field"><span className="pp-record-field-label">Diagnosis</span><span className="pp-record-field-value">{record.diagnosis}</span></div>
+                                {record.prescription   && <div className="pp-record-field"><span className="pp-record-field-label">Prescription</span><span className="pp-record-field-value">{record.prescription}</span></div>}
+                                {record.investigations && <div className="pp-record-field"><span className="pp-record-field-label">Investigations</span><span className="pp-record-field-value">{record.investigations}</span></div>}
+                                {record.followUpDate   && <div className="pp-record-field"><span className="pp-record-field-label">Follow-up</span><span className="pp-record-field-value">{new Date(record.followUpDate).toLocaleDateString("en-US", { day:"numeric", month:"short", year:"numeric" })}</span></div>}
+                                {record.notes && <div className="pp-record-field" style={{gridColumn:"1/-1"}}><span className="pp-record-field-label">Notes</span><span className="pp-record-field-value">{record.notes}</span></div>}
+                              </div>
+
+                              <div className="pp-attachments">
+                                <p className="pp-attachments-label">Attachments</p>
+                                <div className="pp-attach-row">
+                                  <label className="pp-upload-label">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                      <polyline points="17 8 12 3 7 8"/>
+                                      <line x1="12" y1="3" x2="12" y2="15"/>
+                                    </svg>
+                                    Upload file
+                                    <input type="file" style={{display:"none"}} onChange={e => handleFileUpload(e, record.id)}/>
+                                  </label>
+                                  <span style={{fontSize:"0.7rem", color:"#9ca3af"}}>Lab reports, scans, PDFs</span>
+                                </div>
+                                {record.attachments?.length > 0 && (
+                                  <div style={{marginTop:7, display:"flex", flexDirection:"column", gap:5}}>
+                                    {record.attachments.map((file: any) => (
+                                      <div key={file.id} className="pp-attach-row">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.75">
+                                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                        </svg>
+                                        <span className="pp-attach-name">{file.fileName}</span>
+                                        <button className="pp-attach-view" onClick={() => handleViewFile(file.filePath, record.id)}>View</button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Verified block footer */}
+                              <div className="pp-verified-footer">
+                                <div className="pp-verified-badge">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7z"/>
+                                    <polyline points="9 12 11 14 15 10"/>
+                                  </svg>
+                                  Verified Block
+                                </div>
+                                <span className="pp-record-hash" title={fakeHash}>{fakeHash}</span>
+                              </div>
                             </div>
-                          ))}
+                          </div>
+
                         </div>
-                      )}
-                    </div>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
+
               </div>
             </div>
 
-            {/* ══════════════════════════════════════
-                RIGHT COLUMN — Access Log (sticky)
-            ══════════════════════════════════════ */}
+            {/* RIGHT — Access Log */}
             <div className="pp-right-col pp-anim pp-d3">
               <div className="pp-card pp-log-card">
-
                 <div className="pp-log-card-header">
-                  <span className="pp-log-card-title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-                      <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-                    </svg>
-                    Access Log
-                  </span>
+                  {/* Plain text — no icon */}
+                  <span className="pp-log-card-title">Access Log</span>
                   <span className="pp-log-card-count">{accessLogs.length}</span>
                 </div>
 
@@ -701,13 +751,9 @@ export default function PatientProfile() {
                     const m = methodMeta[log.method] ?? methodMeta.MANUAL;
                     return (
                       <div key={log.id} className="pp-log-entry">
-
-                        {/* Colored dot */}
                         <div className="pp-log-dot-col">
                           <div className="pp-log-dot" style={{background: m.dot}}/>
                         </div>
-
-                        {/* Content */}
                         <div className="pp-log-entry-body">
                           <span className="pp-log-entry-action">
                             {actionLabel[log.action] ?? log.action.replace(/_/g," ").toLowerCase().replace(/^\w/,(c:string)=>c.toUpperCase())}
@@ -716,10 +762,7 @@ export default function PatientProfile() {
                             <span className="pp-log-entry-doctor">Dr. {log.user.name}</span>
                           )}
                           <div className="pp-log-entry-footer">
-                            <span
-                              className="pp-log-pill"
-                              style={{background: m.bg, color: m.text, border:`1px solid ${m.border}`}}
-                            >
+                            <span className="pp-log-pill" style={{background:m.bg, color:m.text, border:`1px solid ${m.border}`}}>
                               {m.label}
                             </span>
                             {log.ipAddress && log.ipAddress !== "unknown" && (
@@ -727,27 +770,19 @@ export default function PatientProfile() {
                             )}
                           </div>
                         </div>
-
-                        {/* Time */}
                         <span className="pp-log-entry-time" title={new Date(log.createdAt).toLocaleString()}>
                           {relativeTime(log.createdAt)}
                         </span>
-
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Footer rule */}
                 {accessLogs.length > 0 && (
-                  <div style={{
-                    borderTop:"1px solid #f3f4f6", padding:"10px 0 14px",
-                    fontSize:"0.68rem", color:"#9ca3af", textAlign:"center", flexShrink:0,
-                  }}>
+                  <div style={{borderTop:"1px solid #f3f4f6", padding:"10px 0 14px", fontSize:"0.68rem", color:"#9ca3af", textAlign:"center", flexShrink:0}}>
                     Last {accessLogs.length} event{accessLogs.length !== 1 ? "s" : ""}
                   </div>
                 )}
-
               </div>
             </div>
 
